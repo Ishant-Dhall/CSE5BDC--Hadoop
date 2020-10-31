@@ -1,4 +1,7 @@
-set hivevar:studentId=12345678; --Please replace it with your student id 
+set hivevar:studentId=20105729; --Please replace it with your student id 
+DROP TABLE ${studentId}_myinput;
+DROP TABLE ${studentId}_mywords;
+DROP TABLE ${studentId}_wordcount;
 
 CREATE TABLE ${studentId}_myinput (line STRING);
 
@@ -18,8 +21,12 @@ CREATE TABLE ${studentId}_wordcount AS
 SELECT word, count(1) AS count
 FROM ${studentId}_mywords
 WHERE word NOT LIKE ""
-GROUP BY word;
+GROUP BY word
+ORDER BY count DESC, word ASC;
 
 -- Dump the output to file
 INSERT OVERWRITE LOCAL DIRECTORY './task2-out/'
+     ROW FORMAT DELIMITED
+     FIELDS TERMINATED BY '\t'
+     STORED AS TEXTFILE
   SELECT * FROM ${studentId}_wordcount;
