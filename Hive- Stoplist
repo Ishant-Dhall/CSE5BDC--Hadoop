@@ -1,0 +1,45 @@
+set hivevar:studentId=20105729; --Please replace it with your student id 
+DROP TABLE ${studentId}_myinput;
+DROP TABLE ${studentId}_mywords;
+DROP TABLE ${studentId}_stopwords;
+DROP TABLE ${studentId}_stopjoin1;
+DROP TABLE ${studentId}_stoplistout;
+--
+CREATE TABLE ${studentId}_myinput (line STRING);
+
+-- Load the text from the local filesystem
+LOAD DATA LOCAL INPATH './Input_data/2/'
+  INTO TABLE ${studentId}_myinput;
+-- Creating a table
+CREATE TABLE ${studentId}_stopwords (words STRING);
+--loading
+LOAD DATA LOCAL INPATH './Input_data/4/'
+  INTO TABLE ${studentId}_stopwords;
+
+
+-- Table containing all the words in the myinput table
+-- The difference between this table and myinput is that myinput stores each line as a separate row
+-- whereas mywords stores each word as a separate row.
+CREATE TABLE ${studentId}_mywords AS
+SELECT EXPLODE(SPLIT(LCASE(REGEXP_REPLACE(line,'[\\p{Punct},\\p{Cntrl}]','')),' ')) AS word
+FROM ${studentId}_myinput;
+                                          
+-- Creating another table with two columns
+CREATE TABLE ${studentId}_stopjoin1 AS
+SELECT ${studentId}_mywords.word AS mword, ${studentId}_stopwords.words AS sword
+FROM ${studentId}_mywords LEFT OUTER JOIN ${studentId}_stopwords 
+ON (${studentId}_mywords.word = ${studentId}_stopwords.words)
+WHERE ${studentId}_mywords.word NOT LIKE "";
+--
+CREATE TABLE ${studentId}_stoplistout AS
+SELECT ${studentId}_stopjoin1.mword as word
+FROM ${studentId}_stopjoin1
+WHERE ${studentId}_stopjoin1.sword IS NULL;
+                                          
+-- Dump the output to file
+INSERT OVERWRITE LOCAL DIRECTORY './task4-out/'
+ROW FORMAT DELIMITED
+  FIELDS TERMINATED BY '\t'
+STORED AS TEXTFILE
+  SELECT * FROM ${studentId}_stoplistout;
+
