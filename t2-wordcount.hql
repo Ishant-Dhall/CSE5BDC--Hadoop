@@ -1,4 +1,4 @@
-set hivevar:studentId=20105729; --Please replace it with your student id 
+set hivevar:studentId=*********; --Please replace it with your student id 
 DROP TABLE ${studentId}_myinput;
 DROP TABLE ${studentId}_mywords;
 DROP TABLE ${studentId}_wordcount;
