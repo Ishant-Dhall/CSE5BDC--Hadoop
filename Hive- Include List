@@ -1,0 +1,49 @@
+set hivevar:studentId=20105729; --Please replace it with your student id 
+DROP TABLE ${studentId}_myinput;
+DROP TABLE ${studentId}_mywords;
+DROP TABLE ${studentId}_includewords;
+DROP TABLE ${studentId}_includejoin;
+DROP TABLE ${studentId}_dojoin;
+
+
+
+--
+CREATE TABLE ${studentId}_myinput (line STRING);
+
+-- Load the text from the local filesystem
+LOAD DATA LOCAL INPATH './Input_data/2/'
+  INTO TABLE ${studentId}_myinput;
+-- Creating a table
+CREATE TABLE ${studentId}_includewords (words STRING);
+--loading
+LOAD DATA LOCAL INPATH './Input_data/6/'
+  INTO TABLE ${studentId}_includewords;
+
+
+-- Table containing all the words in the myinput table
+-- The difference between this table and myinput is that myinput stores each line as a separate row
+-- whereas mywords stores each word as a separate row.
+CREATE TABLE ${studentId}_mywords AS
+SELECT EXPLODE(SPLIT(LCASE(REGEXP_REPLACE(line,'[\\p{Punct},\\p{Cntrl}]','')),' ')) AS word
+FROM ${studentId}_myinput;
+                                          
+-- Creating another table with two columns
+--CREATE TABLE ${studentId}_includejoin AS
+--SELECT ${studentId}_mywords.word AS mword, ${studentId}_includewords.words AS sword
+--FROM ${studentId}_mywords FULL JOIN ${studentId}_includewords ;
+--ON (${studentId}_mywords.word = ${studentId}_includewords.words);
+CREATE TABLE ${studentId}_dojoin AS
+SELECT ${studentId}_mywords.word AS wordlist, ${studentId}_includewords.words AS includelist, count(*) As Count_words
+FROM ${studentId}_mywords INNER JOIN ${studentId}_includewords 
+ON (${studentId}_mywords.word = ${studentId}_includewords.words)
+GROUP BY ${studentId}_mywords.word, ${studentId}_includewords.words
+ORDER BY Count_words DESC, includelist ASC;
+                                          
+
+-- Dump the output to file
+INSERT OVERWRITE LOCAL DIRECTORY './task6-out/'
+ROW FORMAT DELIMITED
+  FIELDS TERMINATED BY '\t'
+STORED AS TEXTFILE
+  SELECT * FROM ${studentId}_dojoin;
+
